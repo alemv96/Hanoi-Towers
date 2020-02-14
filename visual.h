@@ -1,10 +1,4 @@
-/*
-  file: visual.cpp
-  Authors: Alex Martinez Veloz , Brandon Pack
-  Date: 02/12/2020
-  Description: This file contain the classes that would print the
-               game
-*/
+
 #include<iostream>
 using namespace std;
 
