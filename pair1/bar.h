@@ -7,9 +7,9 @@
 
 namespace bar 
 {
-    enum bar_color{BLACK=40, RED, GREEN, YELLOW, 
-                   BLUE, MAGENTA, CYAN, WHITE};
+     enum bar_color{BLACK=40, RED, GREEN, YELLOW, 
+                   BLUE, MAGENTA, CYAN, WHITE , LIGHTGREEN};
 
-    std::string draw_bar(bar_color color, unsigned int width);
+    std::string draw_bar(bar_color, unsigned int width);
 }
 #endif

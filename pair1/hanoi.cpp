@@ -6,9 +6,13 @@
  */
 
 #include <iostream>
-#include "bar.h"
 #include <iomanip>
 #include <cmath>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include "bar.h"
+#include <sstream>
 
 using namespace std;
 
@@ -20,6 +24,9 @@ bool const  EMPTY = false;
 bool const WIN  = true;
 bool const FILL = true;
 int const NO_DISK = 0;
+int const START_TOWER = 1;
+int const MIDDLE_TOWER = 2;
+int const END_TOWER = 3;
 
 //structures
 struct Disk{
@@ -32,7 +39,7 @@ struct Disk{
 
 struct Tower{
     Disk disks[1024];         // Array of disks
-                             // declaring the size at the beginning
+    int tower_id;
     int n_disks;
 
 };
@@ -46,7 +53,10 @@ void game_initializer(Tower tower[] , int n_disks);
 float get_width(int disk_number);
 int get_source();
 int get_destination();
+bool check_movement(Tower tower[] , int source , int destination , int source_disk , int destination_disk);
 bool check_for_win(Tower tower[] , int n_disks);
+bool tower_empty(Tower tower[] , int n_disks , int destination);
+void print_game(Tower tower[] , int n_disks);
 
 //Main function
 int main() {
@@ -58,7 +68,6 @@ int main() {
         game_initializer(tower, n_disks);
         user_menu(tower , n_disks);
         //solution(n_disk , SOURCE , DESTINATION , SPARE);
-
   return 0;
 }
 
@@ -66,6 +75,14 @@ int main() {
 float get_width(int disk_number){
     return disk_number*2;       // check this when printing on screen, we might have to change this 
                                 // depending on how it looks
+}
+
+//This function will check if the user movement is correct or not.
+bool check_movement(Tower tower[] , int source , int destination , int source_disk , int destination_disk){
+        
+        if (tower[source].disks[source_disk].disk_number < tower[destination].disks[destination_disk].disk_number )
+              return true;
+        else  return false;
 }
 
 //this function initialize Tower 1 and fill it up with disks...
@@ -77,8 +94,8 @@ void game_initializer(Tower tower[], int n_disks){
            for (int disk_count = 0 ; disk_count < n_disks ; disk_count ++){
                 
                 tower[count_tower].disks[disk_count].width = get_width(disk_count);
-                tower[count_tower].disks[disk_count].color = 'u'; //for now the color it's going to be undefined
 		tower[count_tower].disks[disk_count].position = count_tower + 1;                      
+                tower[count_tower].tower_id = count_tower + 1;                
    
                 //This conditional will assign true if the disks are on tower one.            
                     if (count_tower == 0){  
@@ -89,17 +106,10 @@ void game_initializer(Tower tower[], int n_disks){
                         tower[count_tower].disks[disk_count].disk_number = NO_DISK;
                     }
            }
-        }
-         
-        //these couts print the towers (Only works for 3 to print)
-        cout << tower[0].disks[0].status << setw(10) << tower[1].disks[0].status 
-             << setw(10) << tower[2].disks[0].status << endl;
-        cout << tower[0].disks[1].status << setw(10) << tower[1].disks[1].status
-             << setw(10) << tower[2].disks[1].status << endl;
-        cout << tower[0].disks[2].status << setw(10) << tower[1].disks[2].status
-             << setw(10) << tower[2].disks[2].status << endl;   
+        }  
       
 }
+
 
 //this function will verify the third tower to check if it is in order.
 bool check_for_win(Tower tower[] , int n_disks){
@@ -127,7 +137,7 @@ int get_source(){
         cout << "Enter source tower >> " ;
         cin >> source;
       
-    return source;   
+    return (source - 1);   
 }
 
 //Ask and save destination tower;
@@ -137,34 +147,119 @@ int get_destination(){
         cout << "Enter the destination tower >> ";
         cin >> destination;
 
-   return destination; 
+   return (destination - 1); 
 }
 
+//Function that checks if the destination tower is empty
+bool tower_empty(Tower tower[] , int n_disks , int destination){
+    int empty_tower = 0;
+
+        for (int disk_count = n_disks -1 ; disk_count >= 0 ; disk_count --)
+            if (!tower[destination].disks[disk_count].status) empty_tower ++;
+        
+        if (empty_tower == n_disks) return true;
+        else return false;
+
+}
+
+//Let the user interact with the game.
 void play_puzzle(Tower tower[] , int n_disks){
    
      int source;
      int destination;
      int exit;
+     Disk disk_temp;
+     bool flag;
+     bool win = false;
      
      do{
        source = get_source();
        destination = get_destination();
+       flag = false;
+    
+          if (tower_empty(tower , n_disks , destination)){
+     
+              int count_disk = 0;
+                 while(!flag){
+                    
+                    //swap disk
+                    if(tower[source].disks[count_disk].status){
+                      disk_temp = tower[source].disks[count_disk];
+                      tower[source].disks[count_disk] = tower[destination].disks[n_disks - 1];
+                      tower[destination].disks[n_disks - 1] = disk_temp;
+                      
+                      tower[destination].disks[n_disks - 1].status = true;
+                      tower[source].disks[count_disk].status = false;                      
 
-          if (check_for_win(tower)){
-              cout << "You have completed the puzzle!" << endl;
-          }else {
-              if (check_availability(tower)){
-
-              }else
-              // loop to check towers and make the movement.
-          }
+                      flag = true;
+                    }else count_disk ++;
+                    
+                    if (count_disk == n_disks){
+                      flag = true;
+                      cout << "Source tower is empty, try again" << endl;
+                    }
+                 }
    
+           }else{
+             int source_disk = 0; 
+             int destination_disk = n_disks - 1;
+
+               while(!flag){
+                  if(tower[source].disks[source_disk].status){ 
+                    if(!tower[destination].disks[destination_disk].status){
+                      //This conditional makes sure the movement is valid.
+                      if (check_movement(tower , source , destination , source_disk , destination_disk + 1)){   
+                         //once it checks the movement, swap disks!.
+                         disk_temp = tower[source].disks[source_disk];
+                         tower[source].disks[source_disk] = tower[destination].disks[destination_disk];
+                         tower[destination].disks[destination_disk] = disk_temp;
+                         flag = true;
+                      }else{
+                         cout << "You can't make that move, try again!." << endl;
+                         flag = true;
+                      }
+                    }else destination_disk --;
+   	       	
+                  }else source_disk ++;
+                 
+                  if ((source_disk == n_disks) && (destination_disk == 0)){
+                     cout << "You can't make that move, try again!." << endl;
+                     flag = true;
+                  }
+
+               }
+           }
+          
+          //This conditional makes sure the user solve the puzzle
+          if (check_for_win(tower , n_disks)){
+              cout << "You have solved the puzzle!" << endl;
+              win = WIN;
+           }
+
+          //print fuction here.
+          
           cout << "Enter 1 to exit the game" << endl;
           cout << "Enter 0 to keep playing" << endl;
           cin >> exit;
-
-     }while((check_for_win(tower)) || (exit == 1));
+       
+           //these couts print the towers (Only works for 3 to print)
+        cout << tower[0].disks[0].disk_number << setw(10) << tower[1].disks[0].disk_number 
+             << setw(10) << tower[2].disks[0].disk_number << endl;
+        cout << tower[0].disks[1].disk_number << setw(10) << tower[1].disks[1].disk_number
+             << setw(10) << tower[2].disks[1].disk_number << endl;
+        cout << tower[0].disks[2].disk_number << setw(10) << tower[1].disks[2].disk_number
+             << setw(10) << tower[2].disks[2].disk_number << endl;            
+ 
+     }while((!win) || (exit != 1)); 
 }
+
+void print_game(Tower tower[] , int n_disks){
+     
+     
+
+
+} 
+
 
 //Starting menu
 void user_menu(Tower tower[] , int n_disks){
@@ -178,8 +273,8 @@ void user_menu(Tower tower[] , int n_disks){
                   
 		   	//
       			if (option == '1') {
-                           //print_game(tower);
-          //                 play_puzzle(tower , n_disks);
+                           print_game(tower , n_disks);
+                           play_puzzle(tower , n_disks);
 		   	}
 		   	//show the solution
 		   	else if(option == '2'){
@@ -204,21 +299,3 @@ int get_disks(){
   return disk;
 }
 
-//main loop for solutions
-/*void solution(int n_to_move , int source , int destination , int spare){
-  cout << "Algorithm" << endl;
-  cout << "==================================" << endl;
-//  if(n_to_move == 1){
-  //}
-
-}*/
-  /*
-	if(n_to_move == 1){
-	   cout << "Move from tower " << source << " to tower " << destination << endl;
-	   return;
-  }
-  move(n_to_move - 1 , source , spare, destination);
-  move(1 , source , destination , spare);
-  move(n_to_move - 1 , spare , destination , source);
-}
-  */
