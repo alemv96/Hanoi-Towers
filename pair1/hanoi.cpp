@@ -2,7 +2,7 @@
   file: hanoi.cpp
   Authors: Alex Martinez Veloz , Brandon Pack
   Date: 02/12/2020
-  Description: This file contain the classes that would print the
+  Description: Hanoi towers game.
  */
 
 #include <iostream>
@@ -15,6 +15,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace bar;
 
 int const SOURCE = 1;
 int const SPARE = 2;
@@ -24,9 +25,9 @@ bool const  EMPTY = false;
 bool const WIN  = true;
 bool const FILL = true;
 int const NO_DISK = 0;
-int const START_TOWER = 1;
-int const MIDDLE_TOWER = 2;
-int const END_TOWER = 3;
+int const START_TOWER = 0;
+int const MIDDLE_TOWER = 1;
+int const END_TOWER = 2;
 
 //structures
 struct Disk{
@@ -35,6 +36,7 @@ struct Disk{
     int width;
     int position;           // This would depend on which tower the disk is
     bool status;
+    bar_color b_color;
 };
 
 struct Tower{
@@ -56,7 +58,8 @@ int get_destination();
 bool check_movement(Tower tower[] , int source , int destination , int source_disk , int destination_disk);
 bool check_for_win(Tower tower[] , int n_disks);
 bool tower_empty(Tower tower[] , int n_disks , int destination);
-void print_game(Tower tower[] , int n_disks);
+void print_game(Tower tower[] , int n_disks );
+bar_color get_color(bool flag);
 
 //Main function
 int main() {
@@ -73,7 +76,7 @@ int main() {
 
 //This function assigns a width to each disk, based on its number...
 float get_width(int disk_number){
-    return disk_number*2;       // check this when printing on screen, we might have to change this 
+    return disk_number * 2;       // check this when printing on screen, we might have to change this 
                                 // depending on how it looks
 }
 
@@ -89,21 +92,25 @@ bool check_movement(Tower tower[] , int source , int destination , int source_di
 void game_initializer(Tower tower[], int n_disks){
     
          //initialize towers.
+      srand(time(NULL));
          
 	for (int count_tower = 0 ; count_tower < MAX_TOWERS; count_tower ++){
            for (int disk_count = 0 ; disk_count < n_disks ; disk_count ++){
-                
-                tower[count_tower].disks[disk_count].width = get_width(disk_count);
+               
 		tower[count_tower].disks[disk_count].position = count_tower + 1;                      
                 tower[count_tower].tower_id = count_tower + 1;                
-   
+                
                 //This conditional will assign true if the disks are on tower one.            
                     if (count_tower == 0){  
                         tower[count_tower].disks[disk_count].status = FILL;
                         tower[count_tower].disks[disk_count].disk_number = disk_count + 1;
+                        tower[count_tower].disks[disk_count].b_color = get_color(true);
+                        tower[count_tower].disks[disk_count].width = get_width(disk_count + 1);
                     }else{
                         tower[count_tower].disks[disk_count].status = EMPTY;
                         tower[count_tower].disks[disk_count].disk_number = NO_DISK;
+                        tower[count_tower].disks[disk_count].b_color = get_color(false);
+                        tower[count_tower].disks[disk_count].width = get_width(0);
                     }
            }
         }  
@@ -133,20 +140,22 @@ bool check_for_win(Tower tower[] , int n_disks){
 //Functions that ask and save source tower;
 int get_source(){
   int source;
+     do{
      //ask the user for the source tower;    
         cout << "Enter source tower >> " ;
         cin >> source;
-      
+     }while((source <= 0) || (source >= 4));  
     return (source - 1);   
 }
 
 //Ask and save destination tower;
 int get_destination(){
   int destination;
+      do{
      //ask the user for the destination tower;
         cout << "Enter the destination tower >> ";
         cin >> destination;
-
+      }while((destination <= 0) || (destination >= 4));
    return (destination - 1); 
 }
 
@@ -167,7 +176,6 @@ void play_puzzle(Tower tower[] , int n_disks){
    
      int source;
      int destination;
-     int exit;
      Disk disk_temp;
      bool flag;
      bool win = false;
@@ -230,35 +238,58 @@ void play_puzzle(Tower tower[] , int n_disks){
                }
            }
           
+          //print function here
+          print_game(tower , n_disks);
+
           //This conditional makes sure the user solve the puzzle
           if (check_for_win(tower , n_disks)){
               cout << "You have solved the puzzle!" << endl;
               win = WIN;
            }
-
-          //print fuction here.
-          
-          cout << "Enter 1 to exit the game" << endl;
-          cout << "Enter 0 to keep playing" << endl;
-          cin >> exit;
-       
-           //these couts print the towers (Only works for 3 to print)
-        cout << tower[0].disks[0].disk_number << setw(10) << tower[1].disks[0].disk_number 
-             << setw(10) << tower[2].disks[0].disk_number << endl;
-        cout << tower[0].disks[1].disk_number << setw(10) << tower[1].disks[1].disk_number
-             << setw(10) << tower[2].disks[1].disk_number << endl;
-        cout << tower[0].disks[2].disk_number << setw(10) << tower[1].disks[2].disk_number
-             << setw(10) << tower[2].disks[2].disk_number << endl;            
- 
-     }while((!win) || (exit != 1)); 
+        
+     }while(!win); 
 }
 
 void print_game(Tower tower[] , int n_disks){
+ int w_setting = 25; 
+ int steps = pow(2 , n_disks) - 1; 
+  
+        
+       for (int disk_count = 0; disk_count < n_disks ; disk_count ++){
+         cout << setw(w_setting + disk_count) 
+              << draw_bar(tower[START_TOWER].disks[disk_count].b_color , tower[START_TOWER].disks[disk_count].width) 
+              << setw(w_setting + 10)
+              << draw_bar(tower[MIDDLE_TOWER].disks[disk_count].b_color , tower[MIDDLE_TOWER].disks[disk_count].width)
+	      << setw(w_setting + 10) 
+              << draw_bar(tower[END_TOWER].disks[disk_count].b_color, tower[END_TOWER].disks[disk_count].width)
+	      << endl;
+                     
+       } 
      
-     
-
+       cout << setw(16) << "Tower 1" << setw(29) << "Tower 2" << setw(26) << "Tower 3" << endl;
+       cout << "_______________________________________________________________________________" << endl;
+       cout << right << setw(78) << " Steps : "<< steps << endl;
 
 } 
+
+bar_color get_color(bool flag){
+  int pick_color;
+
+  if (flag){
+      pick_color = (rand() % 7) +1;  
+
+         switch(pick_color){
+           case 1: return BLACK;
+           case 2: return RED;
+           case 3: return GREEN;
+           case 4: return YELLOW;
+           case 5: return BLUE;
+           case 6: return MAGENTA;
+           case 7: return CYAN;
+         }
+  }else return WHITE;
+
+}
 
 
 //Starting menu
@@ -278,7 +309,7 @@ void user_menu(Tower tower[] , int n_disks){
 		   	}
 		   	//show the solution
 		   	else if(option == '2'){
-		   		//solution(n_disks, SOURCE , DESTINATION, SPARE);
+		            solution(n_disks, SOURCE , DESTINATION, SPARE);
 			}
                         else if(option == '3')
                             cout << "GoodBye! " << endl;
@@ -299,3 +330,24 @@ int get_disks(){
   return disk;
 }
 
+void solution(int n_to_move , int source , int destination , int spare){
+	if(n_to_move == 1){
+		cout << endl;
+		cout << "N     Src   Dest  Spare Step " <<endl;
+		cout << "===== ===== ===== ===== =====" << endl;
+
+		cout << left << setw(6) << n_to_move << setw(6) << source << setw(6)
+		     <<destination << setw(6) << spare << setw(6) << "0"
+		     << "\t(" << source << ", " << destination << ')' << endl;
+		return;
+	}
+	solution(n_to_move - 1 , source , spare , destination);
+	cout << left << setw(6) << n_to_move << setw(6) << source << setw(6)
+		     <<destination << setw(6) << spare << setw(6) << "0" << endl;
+	solution(1 , source , destination , spare);
+	cout << left << setw(6) << n_to_move << setw(6) << source << setw(6)
+		     <<destination << setw(6) << spare << setw(6) << "0" << endl;
+	solution(n_to_move - 1 , spare , destination , source);
+	cout << left << setw(6) << n_to_move << setw(6) << source << setw(6)
+		     <<destination << setw(6) << spare << setw(6) << "0" << endl;
+}
